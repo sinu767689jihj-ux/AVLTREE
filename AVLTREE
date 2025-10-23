@@ -1,0 +1,224 @@
+#include<stdio.h>
+#include<stdlib.h>
+struct TreeNode
+{
+	int data;
+	struct TreeNode*left;
+	struct TreeNode*right;
+	int height;
+};
+int height(struct TreeNode*N)
+{
+	if(N==NULL)
+	return 0;
+	return N->height;
+}
+int max(int a,int b)
+{
+	return (a>b)?a:b;
+}
+int Balancefactor(struct TreeNode*node)
+{
+	if(node==NULL)
+	return 0;
+	return height(node->left)-height(node->right);
+}
+// right Rotation(LL case)
+struct TreeNode*rightRotation(struct TreeNode*y)
+{
+	struct TreeNode*x=y->left;
+	struct TreeNode*T2=x->right;
+	x->right=y;
+	y->left=T2;
+	y->height=max(height(y->left),height(y->right))+1;
+	x->height=max(height(x->left),height(x->right))+1;
+	return x;
+}
+// left Rotation(RR case)
+struct TreeNode*leftRotation(struct TreeNode*x)
+{
+	struct TreeNode*y=x->right;
+	struct TreeNode*T2=y->left;
+	y->left=x;
+	x->right=T2;
+	y->height=max(height(y->left),height(y->right))+1;
+	x->height=max(height(x->left),height(x->right))+1;
+	return y;
+}
+//insertion function
+struct TreeNode*insert(struct TreeNode*node,int key)
+{
+	if(node==NULL)
+	{
+		struct TreeNode*newNode=(struct TreeNode*)malloc(sizeof(struct TreeNode));
+		newNode->data=key;
+		newNode->left=newNode->right=NULL;
+		newNode->height=1;
+		return newNode;
+	}
+	if(key<node->data)
+	node->left=insert(node->left,key);
+	else if(key>node->data)
+	node->right=insert(node->right,key);
+	else
+	return node;
+	//height of the node
+	node->height=max(height(node->left),height(node->right))+1;
+	int balance=Balancefactor(node);
+	//left left Rotation
+	if(balance>1&&key<node->left->data)
+	return rightRotation(node);
+	//right right Rotation
+	if(balance<-1&&key>node->right->data)
+	return leftRotation(node);
+	//left right Rotation
+	if(balance>1&&key>node->left->data)
+	{
+		node->left=leftRotation(node->left);
+		return rightRotation(node);
+	}
+	if(balance<-1&&key<node->right->data)
+	{
+		node->right=rightRotation(node->right);
+		return leftRotation(node);
+	}
+	return node;
+}
+// if the minimum value of the tree
+struct TreeNode* minValue(struct TreeNode*node)
+{
+	struct TreeNode*current=node;
+	while(current->left!=NULL)
+	current=current->left;
+	return current;
+}
+//Deletion Function
+struct TreeNode* deleteNode(struct TreeNode* root, int key)
+{
+    // Step 1: Perform standard BST delete
+    if (root == NULL)
+        return root;
+
+    if (key < root->data)
+        root->left = deleteNode(root->left, key);
+    else if (key > root->data)
+        root->right = deleteNode(root->right, key);
+    else {
+        // Node with one or no child
+        if ((root->left == NULL) || (root->right == NULL)) {
+            struct TreeNode* temp = root->left ? root->left : root->right;
+
+            // No child case
+            if (temp == NULL) {
+                temp = root;
+                root = NULL;
+            } else {
+                // One child case
+                *root = *temp; 
+            }
+            free(temp);
+        } else {
+            // Node with two children
+            struct TreeNode* temp = minValue(root->right);
+
+            // Copy inorder successor's data
+            root->data = temp->data;
+
+            // Delete the inorder successor
+            root->right = deleteNode(root->right, temp->data);
+        }
+    }
+
+    // If the tree had only one node
+    if (root == NULL)
+        return root;
+
+    // Step 2: Update height
+    root->height = 1 + max(height(root->left), height(root->right));
+
+    // Step 3: Get balance factor
+    int balance = Balancefactor(root);
+
+    // Step 4: Balance the tree
+
+    // Left Left Case
+    if (balance > 1 && Balancefactor(root->left) >= 0)
+        return rightRotation(root);
+
+    // Left Right Case
+    if (balance > 1 && Balancefactor(root->left) < 0) {
+        root->left = leftRotation(root->left);
+        return rightRotation(root);
+    }
+
+    // Right Right Case
+    if (balance < -1 && Balancefactor(root->right) <= 0)
+        return leftRotation(root);
+
+    // Right Left Case
+    if (balance < -1 && Balancefactor(root->right) > 0) {
+        root->right = rightRotation(root->right);
+        return leftRotation(root);
+    }
+
+    return root;
+}
+
+void inOrder(struct TreeNode*root)
+{
+	if(root!=NULL){
+	inOrder(root->left);
+	printf("%d\t",root->data);
+	inOrder(root->right);
+}
+}
+void printTree(struct TreeNode*root, int space)
+{
+	if(root==NULL)
+	return ;
+	space+=10;
+	printTree(root->right,space);
+	printf("\n");
+	for(int i=0;i<space;i++)
+	printf(" ");
+	printf("%d",root->data);
+	printTree(root->left,space);
+}
+
+//main function
+int main()
+{
+	struct TreeNode*root=NULL;
+	int choice,key;
+	do{
+		printf("Enter your choice:");
+		scanf("%d",&choice);
+		switch(choice)
+		{
+			case 1:
+				printf("Enter the element into tree:");
+				scanf("%d",&key);
+				root=insert(root,key);
+				break;
+			case 2:
+			      printf("Enter the Deleting Element:");
+				  scanf("%d",&key);
+				  root=deleteNode(root,key);
+				  break;			
+			case 3:
+				printf("Display inOrder Traversal:");
+				inOrder(root);
+				break;
+			case 4:
+			       printTree(root,key);
+			       printf("\n");
+				   break; 
+			case 5:
+				printf("Exiting..\n");
+				break;
+			default:
+				printf("Inavlid choice:");
+		}
+	}while(choice!=5);
+	return 0;
+}
